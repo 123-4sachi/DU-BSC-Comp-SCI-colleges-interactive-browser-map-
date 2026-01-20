@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delhi NCR Colleges Interactive Map</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const MapPin = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const School = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            </svg>
+        );
+
+        const Info = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const DelhiCollegesMap = () => {
+            const [selectedCollege, setSelectedCollege] = useState(null);
+            const [hoveredCollege, setHoveredCollege] = useState(null);
+
+            const colleges = [
+                { name: "Acharya Narendra Dev College", lat: 28.6139, lng: 77.2090, area: "Govindpuri" },
+                { name: "Aryabhatta College", lat: 28.6692, lng: 77.2147, area: "Ajmal Khan Road" },
+                { name: "Atma Ram Sanatan Dharma College", lat: 28.6341, lng: 77.2419, area: "Dhaula Kuan" },
+                { name: "Bhaskaracharya College of Applied Sciences", lat: 28.7603, lng: 77.0713, area: "Dwarka" },
+                { name: "College of Vocational Studies", lat: 28.5494, lng: 77.2714, area: "Sheikh Sarai" },
+                { name: "Deen Dayal Upadhyaya College", lat: 28.7826, lng: 77.0765, area: "Dwarka" },
+                { name: "Dyal Singh College", lat: 28.5707, lng: 77.2122, area: "Lodhi Road" },
+                { name: "Hansraj College", lat: 28.6889, lng: 77.2103, area: "Malka Ganj" },
+                { name: "Indraprastha College for Women", lat: 28.6264, lng: 77.2176, area: "Civil Lines" },
+                { name: "Kalindi College", lat: 28.5385, lng: 77.1860, area: "East Patel Nagar" },
+                { name: "Keshav Mahavidyalaya", lat: 28.7356, lng: 77.1486, area: "Pitampura" },
+                { name: "Mata Sundri College for Women", lat: 28.6264, lng: 77.2333, area: "Mata Sundri Lane" },
+                { name: "P.G.D.A.V. College", lat: 28.6508, lng: 77.2778, area: "Nehru Nagar" },
+                { name: "Ram Lal Anand College", lat: 28.5243, lng: 77.1858, area: "Benito Juarez Road" },
+                { name: "Ramanujan College", lat: 28.5894, lng: 77.2489, area: "Kalkaji" },
+                { name: "Shaheed Rajguru College of Applied Sciences for Women", lat: 28.6953, lng: 77.1486, area: "Vasundhara Enclave" },
+                { name: "Shaheed Sukhdev College of Business Studies", lat: 28.7603, lng: 77.0861, area: "Vivek Vihar" },
+                { name: "Shyama Prasad Mukherji College for Women", lat: 28.7356, lng: 77.1860, area: "Hauz Khas" },
+                { name: "Sri Guru Gobind Singh College of Commerce", lat: 28.7356, lng: 77.1486, area: "Pitampura" },
+                { name: "Sri Guru Tegh Bahadur Khalsa College", lat: 28.6508, lng: 77.2333, area: "North Campus" }
+            ];
+
+            const mapBounds = {
+                minLat: 28.4,
+                maxLat: 28.9,
+                minLng: 77.0,
+                maxLng: 77.4
+            };
+
+            const latLngToXY = (lat, lng) => {
+                const x = ((lng - mapBounds.minLng) / (mapBounds.maxLng - mapBounds.minLng)) * 800;
+                const y = ((mapBounds.maxLat - lat) / (mapBounds.maxLat - mapBounds.minLat)) * 600;
+                return { x, y };
+            };
+
+            return (
+                <div className="w-full h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+                    <div className="max-w-7xl mx-auto h-full flex flex-col">
+                        <div className="bg-white rounded-t-xl shadow-lg p-6 border-b-4 border-indigo-600">
+                            <div className="flex items-center gap-3">
+                                <School className="w-8 h-8 text-indigo-600" />
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-800">Delhi NCR Colleges Map</h1>
+                                    <p className="text-gray-600 mt-1">Interactive map showing 20 colleges across Delhi NCR</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 bg-white rounded-b-xl shadow-lg overflow-hidden flex">
+                            <div className="flex-1 relative bg-gradient-to-br from-blue-100 to-green-50 p-8">
+                                <svg 
+                                    viewBox="0 0 800 600" 
+                                    className="w-full h-full"
+                                    style={{ maxHeight: 'calc(100vh - 200px)' }}
+                                >
+                                    <defs>
+                                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ddd" strokeWidth="0.5"/>
+                                        </pattern>
+                                    </defs>
+                                    <rect width="800" height="600" fill="url(#grid)" />
+                                    
+                                    <ellipse cx="400" cy="300" rx="280" ry="220" 
+                                        fill="rgba(99, 102, 241, 0.05)" 
+                                        stroke="#6366f1" 
+                                        strokeWidth="2" 
+                                        strokeDasharray="5,5"
+                                    />
+
+                                    {colleges.map((college, idx) => {
+                                        const { x, y } = latLngToXY(college.lat, college.lng);
+                                        const isSelected = selectedCollege?.name === college.name;
+                                        const isHovered = hoveredCollege?.name === college.name;
+                                        
+                                        return (
+                                            <g key={idx}>
+                                                {isSelected && (
+                                                    <circle cx={x} cy={y} r="20" fill="#6366f1" opacity="0.3">
+                                                        <animate attributeName="r" from="20" to="30" dur="1s" repeatCount="indefinite" />
+                                                        <animate attributeName="opacity" from="0.3" to="0" dur="1s" repeatCount="indefinite" />
+                                                    </circle>
+                                                )}
+                                                
+                                                <circle 
+                                                    cx={x} 
+                                                    cy={y} 
+                                                    r={isSelected ? 8 : isHovered ? 7 : 6}
+                                                    fill={isSelected ? "#4f46e5" : "#6366f1"}
+                                                    stroke="white"
+                                                    strokeWidth="2"
+                                                    style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                                                    onMouseEnter={() => setHoveredCollege(college)}
+                                                    onMouseLeave={() => setHoveredCollege(null)}
+                                                    onClick={() => setSelectedCollege(college)}
+                                                />
+                                                
+                                                {isHovered && !isSelected && (
+                                                    <g>
+                                                        <rect 
+                                                            x={x + 15} 
+                                                            y={y - 25} 
+                                                            width="180" 
+                                                            height="40" 
+                                                            fill="white" 
+                                                            stroke="#6366f1" 
+                                                            strokeWidth="2"
+                                                            rx="5"
+                                                        />
+                                                        <text 
+                                                            x={x + 25} 
+                                                            y={y - 10} 
+                                                            style={{ fontSize: '12px', fontWeight: '600' }}
+                                                            fill="#1f2937"
+                                                        >
+                                                            {college.name.substring(0, 25)}...
+                                                        </text>
+                                                        <text 
+                                                            x={x + 25} 
+                                                            y={y + 5} 
+                                                            style={{ fontSize: '12px' }}
+                                                            fill="#6b7280"
+                                                        >
+                                                            {college.area}
+                                                        </text>
+                                                    </g>
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+                                </svg>
+
+                                <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg border-2 border-indigo-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Info className="w-4 h-4 text-indigo-600" />
+                                        <span className="font-semibold text-sm text-gray-800">Legend</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-indigo-600 border-2 border-white"></div>
+                                        <span className="text-xs text-gray-600">College Location</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-2">
+                                        Click markers for details
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="w-80 bg-gradient-to-br from-indigo-50 to-blue-50 p-6 overflow-y-auto border-l-2 border-indigo-200">
+                                {selectedCollege ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-white rounded-lg p-4 shadow-md border-l-4 border-indigo-600">
+                                            <div className="flex items-start gap-3">
+                                                <MapPin className="w-6 h-6 text-indigo-600 flex-shrink-0 mt-1" />
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-gray-800 mb-2">
+                                                        {selectedCollege.name}
+                                                    </h3>
+                                                    <div className="space-y-2 text-sm text-gray-600">
+                                                        <p><span className="font-semibold">Area:</span> {selectedCollege.area}</p>
+                                                        <p><span className="font-semibold">Coordinates:</span> {selectedCollege.lat.toFixed(4)}°N, {selectedCollege.lng.toFixed(4)}°E</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setSelectedCollege(null)}
+                                            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
+                                        >
+                                            Clear Selection
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="bg-white rounded-lg p-4 shadow-md">
+                                            <h3 className="font-bold text-lg text-gray-800 mb-3 flex items-center gap-2">
+                                                <School className="w-5 h-5 text-indigo-600" />
+                                                All Colleges ({colleges.length})
+                                            </h3>
+                                            <p className="text-sm text-gray-600 mb-4">
+                                                Click on any marker on the map to see college details
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                                            {colleges.map((college, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setSelectedCollege(college)}
+                                                    onMouseEnter={() => setHoveredCollege(college)}
+                                                    onMouseLeave={() => setHoveredCollege(null)}
+                                                    className="w-full text-left bg-white p-3 rounded-lg shadow hover:shadow-md hover:bg-indigo-50 transition-all border border-gray-200 hover:border-indigo-300"
+                                                >
+                                                    <div className="font-semibold text-sm text-gray-800 mb-1">
+                                                        {college.name}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {college.area}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<DelhiCollegesMap />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delhi NCR Colleges & Metro Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-width: 320px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .info-panel h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1f2937;
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        .college-icon {
+            background: #6366f1;
+            border: 2px solid white;
+        }
+        .metro-icon {
+            background: #ef4444;
+            border: 2px solid white;
+        }
+        .metro-line {
+            height: 4px;
+            margin-right: 10px;
+            width: 30px;
+            border-radius: 2px;
+        }
+        .college-popup {
+            font-size: 14px;
+        }
+        .college-popup h3 {
+            color: #6366f1;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .metro-popup {
+            font-size: 14px;
+        }
+        .metro-popup h3 {
+            color: #ef4444;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .toggle-section {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        .toggle-section label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .toggle-section input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .stats {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .stats strong {
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="info-panel">
+        <h2>🎓 Delhi NCR Colleges & Metro</h2>
+        
+        <div class="stats">
+            <div><strong>20</strong> Colleges</div>
+            <div><strong>30+</strong> Metro Stations</div>
+        </div>
+
+        <div class="toggle-section">
+            <label>
+                <input type="checkbox" id="toggleColleges" checked>
+                Show Colleges
+            </label>
+        </div>
+        <div class="toggle-section">
+            <label>
+                <input type="checkbox" id="toggleMetro" checked>
+                Show Metro Stations
+            </label>
+        </div>
+
+        <h3 style="font-size: 16px; margin: 15px 0 10px 0; color: #1f2937;">Legend</h3>
+        
+        <div class="legend-item">
+            <div class="legend-icon college-icon"></div>
+            <span>College</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon metro-icon"></div>
+            <span>Metro Station</span>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 15px 0 10px 0; color: #1f2937;">Metro Lines</h3>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #dc2626;"></div>
+            <span style="font-size: 13px;">Red Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #eab308;"></div>
+            <span style="font-size: 13px;">Yellow Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #3b82f6;"></div>
+            <span style="font-size: 13px;">Blue Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #10b981;"></div>
+            <span style="font-size: 13px;">Green Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #8b5cf6;"></div>
+            <span style="font-size: 13px;">Violet Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #ec4899;"></div>
+            <span style="font-size: 13px;">Pink Line</span>
+        </div>
+        <div class="legend-item">
+            <div class="metro-line" style="background: #f97316;"></div>
+            <span style="font-size: 13px;">Orange Line</span>
+        </div>
+    </div>
+
+    <script>
+        // Initialize map centered on Delhi
+        const map = L.map('map').setView([28.6139, 77.2090], 11);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Custom icons
+        const collegeIcon = L.divIcon({
+            className: 'custom-icon',
+            html: `<div style="background: #6366f1; width: 28px; height: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px;">🎓</div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        const metroIcon = L.divIcon({
+            className: 'custom-icon',
+            html: `<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">M</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        // College data with actual coordinates
+        const colleges = [
+            { name: "Acharya Narendra Dev College", lat: 28.5386, lng: 77.2503, area: "Govindpuri, Kalkaji" },
+            { name: "Aryabhatta College", lat: 28.6403, lng: 77.2147, area: "Ajmal Khan Road" },
+            { name: "Atma Ram Sanatan Dharma College", lat: 28.6341, lng: 77.2419, area: "Dhaula Kuan" },
+            { name: "Bhaskaracharya College of Applied Sciences", lat: 28.7296, lng: 77.0733, area: "Dwarka Sector 3" },
+            { name: "College of Vocational Studies", lat: 28.5494, lng: 77.2714, area: "Sheikh Sarai, Phase 2" },
+            { name: "Deen Dayal Upadhyaya College", lat: 28.7516, lng: 77.0875, area: "Dwarka Sector 3" },
+            { name: "Dyal Singh College", lat: 28.5707, lng: 77.2122, area: "Lodhi Road" },
+            { name: "Hansraj College", lat: 28.6889, lng: 77.2103, area: "Malka Ganj, North Campus" },
+            { name: "Indraprastha College for Women", lat: 28.6264, lng: 77.2176, area: "Civil Lines" },
+            { name: "Kalindi College", lat: 28.5385, lng: 77.1860, area: "East Patel Nagar" },
+            { name: "Keshav Mahavidyalaya", lat: 28.7356, lng: 77.1486, area: "Pitampura" },
+            { name: "Mata Sundri College for Women", lat: 28.6298, lng: 77.2333, area: "Mata Sundri Lane" },
+            { name: "P.G.D.A.V. College", lat: 28.6508, lng: 77.2778, area: "Nehru Nagar" },
+            { name: "Ram Lal Anand College", lat: 28.5243, lng: 77.1858, area: "Benito Juarez Road, South Campus" },
+            { name: "Ramanujan College", lat: 28.5894, lng: 77.2489, area: "Kalkaji" },
+            { name: "Shaheed Rajguru College of Applied Sciences for Women", lat: 28.6953, lng: 77.3086, area: "Vasundhara Enclave" },
+            { name: "Shaheed Sukhdev College of Business Studies", lat: 28.7603, lng: 77.0861, area: "Vivek Vihar" },
+            { name: "Shyama Prasad Mukherji College for Women", lat: 28.6089, lng: 77.2065, area: "Hauz Khas" },
+            { name: "Sri Guru Gobind Singh College of Commerce", lat: 28.7130, lng: 77.1435, area: "Pitampura" },
+            { name: "Sri Guru Tegh Bahadur Khalsa College", lat: 28.6776, lng: 77.2186, area: "North Campus" }
+        ];
+
+        // Metro stations data with lines
+        const metroStations = [
+            // Red Line
+            { name: "Kashmere Gate", lat: 28.6679, lng: 77.2280, line: "Red Line", color: "#dc2626" },
+            { name: "Tis Hazari", lat: 28.6734, lng: 77.2190, line: "Red Line", color: "#dc2626" },
+            { name: "Pul Bangash", lat: 28.6790, lng: 77.2144, line: "Red Line", color: "#dc2626" },
+            { name: "Pratap Nagar", lat: 28.6833, lng: 77.2088, line: "Red Line", color: "#dc2626" },
+            
+            // Yellow Line
+            { name: "Rajiv Chowk", lat: 28.6328, lng: 77.2197, line: "Yellow Line", color: "#eab308" },
+            { name: "Patel Chowk", lat: 28.6240, lng: 77.2088, line: "Yellow Line", color: "#eab308" },
+            { name: "Central Secretariat", lat: 28.6144, lng: 77.2094, line: "Yellow Line", color: "#eab308" },
+            { name: "Udyog Bhawan", lat: 28.6092, lng: 77.2121, line: "Yellow Line", color: "#eab308" },
+            { name: "Lok Kalyan Marg", lat: 28.6009, lng: 77.2142, line: "Yellow Line", color: "#eab308" },
+            { name: "Jorbagh", lat: 28.5890, lng: 77.2189, line: "Yellow Line", color: "#eab308" },
+            { name: "INA", lat: 28.5738, lng: 77.2210, line: "Yellow Line", color: "#eab308" },
+            { name: "AIIMS", lat: 28.5687, lng: 77.2074, line: "Yellow Line", color: "#eab308" },
+            { name: "Green Park", lat: 28.5598, lng: 77.2066, line: "Yellow Line", color: "#eab308" },
+            { name: "Hauz Khas", lat: 28.5493, lng: 77.2068, line: "Yellow Line", color: "#eab308" },
+            
+            // Blue Line
+            { name: "Dwarka Sector 21", lat: 28.5522, lng: 77.0584, line: "Blue Line", color: "#3b82f6" },
+            { name: "Dwarka Sector 8", lat: 28.5701, lng: 77.0723, line: "Blue Line", color: "#3b82f6" },
+            { name: "Dwarka", lat: 28.5889, lng: 77.0711, line: "Blue Line", color: "#3b82f6" },
+            { name: "Dwarka Mor", lat: 28.6147, lng: 77.0677, line: "Blue Line", color: "#3b82f6" },
+            { name: "Rajouri Garden", lat: 28.6409, lng: 77.1208, line: "Blue Line", color: "#3b82f6" },
+            { name: "Ramesh Nagar", lat: 28.6393, lng: 77.1368, line: "Blue Line", color: "#3b82f6" },
+            { name: "Kirti Nagar", lat: 28.6516, lng: 77.1499, line: "Blue Line", color: "#3b82f6" },
+            
+            // Green Line
+            { name: "Mundka", lat: 28.6838, lng: 77.0357, line: "Green Line", color: "#10b981" },
+            { name: "Ashok Park Main", lat: 28.6928, lng: 77.1336, line: "Green Line", color: "#10b981" },
+            { name: "Punjabi Bagh West", lat: 28.6738, lng: 77.1327, line: "Green Line", color: "#10b981" },
+            
+            // Violet Line
+            { name: "Kashmere Gate", lat: 28.6679, lng: 77.2280, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Lal Quila", lat: 28.6562, lng: 77.2410, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Jama Masjid", lat: 28.6508, lng: 77.2334, line: "Violet Line", color: "#8b5cf6" },
+            { name: "ITO", lat: 28.6281, lng: 77.2496, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Mandi House", lat: 28.6258, lng: 77.2344, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Khan Market", lat: 28.5994, lng: 77.2284, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Nehru Place", lat: 28.5494, lng: 77.2503, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Kalkaji Mandir", lat: 28.5486, lng: 77.2586, line: "Violet Line", color: "#8b5cf6" },
+            { name: "Govind Puri", lat: 28.5386, lng: 77.2503, line: "Violet Line", color: "#8b5cf6" },
+            
+            // Pink Line
+            { name: "Majlis Park", lat: 28.7250, lng: 77.1427, line: "Pink Line", color: "#ec4899" },
+            { name: "Azadpur", lat: 28.7147, lng: 77.1792, line: "Pink Line", color: "#ec4899" },
+            { name: "Netaji Subhash Place", lat: 28.6953, lng: 77.1516, line: "Pink Line", color: "#ec4899" },
+            
+            // Orange Line
+            { name: "Dwarka Sector 21", lat: 28.5522, lng: 77.0584, line: "Orange Line", color: "#f97316" }
+        ];
+
+        // Layer groups for toggling
+        const collegeLayer = L.layerGroup().addTo(map);
+        const metroLayer = L.layerGroup().addTo(map);
+
+        // Add colleges to map
+        colleges.forEach(college => {
+            const marker = L.marker([college.lat, college.lng], { icon: collegeIcon })
+                .bindPopup(`
+                    <div class="college-popup">
+                        <h3>${college.name}</h3>
+                        <p><strong>Location:</strong> ${college.area}</p>
+                        <p><strong>Coordinates:</strong> ${college.lat.toFixed(4)}°N, ${college.lng.toFixed(4)}°E</p>
+                    </div>
+                `)
+                .addTo(collegeLayer);
+        });
+
+        // Add metro stations to map
+        metroStations.forEach(station => {
+            const customMetroIcon = L.divIcon({
+                className: 'custom-icon',
+                html: `<div style="background: ${station.color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">M</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            const marker = L.marker([station.lat, station.lng], { icon: customMetroIcon })
+                .bindPopup(`
+                    <div class="metro-popup">
+                        <h3>🚇 ${station.name}</h3>
+                        <p><strong>Line:</strong> <span style="color: ${station.color}; font-weight: bold;">${station.line}</span></p>
+                        <p><strong>Coordinates:</strong> ${station.lat.toFixed(4)}°N, ${station.lng.toFixed(4)}°E</p>
+                    </div>
+                `)
+                .addTo(metroLayer);
+        });
+
+        // Toggle controls
+        document.getElementById('toggleColleges').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                map.addLayer(collegeLayer);
+            } else {
+                map.removeLayer(collegeLayer);
+            }
+        });
+
+        document.getElementById('toggleMetro').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                map.addLayer(metroLayer);
+            } else {
+                map.removeLayer(metroLayer);
+            }
+        });
+
+        // Add scale control
+        L.control.scale().addTo(map);
+    </script>
+</body>
+</html>
